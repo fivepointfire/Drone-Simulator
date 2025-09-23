@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TimelineState, TimelineMarker, PlaybackRange } from '../types/TimelineTypes';
 import { DroneInstance } from '../types/DroneTypes';
-import { findFrameIndexAtTime } from '../utils/csvLoader';
 
 interface UseTimelineOptions {
   drones: DroneInstance[];
@@ -29,7 +28,7 @@ export function useTimeline({ drones, onTimeChange }: UseTimelineOptions) {
     enabled: false,
   });
 
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
 

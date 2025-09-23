@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useCallback } from 'react';
+import { Suspense, useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Drone } from './components/Drone';
@@ -32,7 +32,7 @@ function App() {
   // Timeline management
   const timeline = useTimeline({
     drones: droneManager.drones,
-    onTimeChange: useCallback((time: number) => {
+    onTimeChange: useCallback((_time: number) => {
       // Update current time for all systems
     }, []),
   });

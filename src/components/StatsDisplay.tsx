@@ -1,4 +1,3 @@
-import React from 'react';
 import { DroneStats } from '../types/DroneTypes';
 import './StatsDisplay.css';
 

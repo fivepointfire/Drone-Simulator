@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { DroneFrame, PlaybackState, DroneStats, DroneInstance } from '../types/DroneTypes';
+import { PlaybackState, DroneStats, DroneInstance } from '../types/DroneTypes';
 import { findFrameIndexAtTime } from '../utils/csvLoader';
 
 interface UseSimulationOptions {
@@ -7,10 +7,10 @@ interface UseSimulationOptions {
   scaleFactor: number;
 }
 
-export function useSimulation({ activeDrone, scaleFactor }: UseSimulationOptions) {
+export function useSimulation({ activeDrone, scaleFactor: _scaleFactor }: UseSimulationOptions) {
   const frames = activeDrone?.frames || [];
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
     isPlaying: true,
     currentTime: 0,
@@ -21,7 +21,7 @@ export function useSimulation({ activeDrone, scaleFactor }: UseSimulationOptions
 
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
 
   // Update playback state when active drone changes
   useEffect(() => {

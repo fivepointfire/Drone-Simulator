@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { DroneFrame } from '../types/DroneTypes';
@@ -16,9 +16,9 @@ export function Grid({ size = 1000, divisions = 50 }: GridProps) {
 
 export function Axes({ length = 100 }: { length?: number }) {
   const axesData = useMemo(() => [
-    { points: [[0, 0, 0], [length, 0, 0]], color: '#ff0000' }, // X - Red
-    { points: [[0, 0, 0], [0, length, 0]], color: '#00ff00' }, // Y - Green
-    { points: [[0, 0, 0], [0, 0, length]], color: '#0000ff' }, // Z - Blue
+    { points: [new Vector3(0, 0, 0), new Vector3(length, 0, 0)], color: '#ff0000' }, // X - Red
+    { points: [new Vector3(0, 0, 0), new Vector3(0, length, 0)], color: '#00ff00' }, // Y - Green
+    { points: [new Vector3(0, 0, 0), new Vector3(0, 0, length)], color: '#0000ff' }, // Z - Blue
   ], [length]);
 
   return (

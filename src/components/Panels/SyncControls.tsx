@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { DroneInstance } from '../../types/DroneTypes';
 import { TimelineState } from '../../types/TimelineTypes';
 
@@ -13,7 +13,7 @@ export function SyncControls({
   drones, 
   timelineState, 
   onSyncDrones, 
-  onAlignToMarker 
+  onAlignToMarker: _onAlignToMarker 
 }: SyncControlsProps) {
   const [selectedDrones, setSelectedDrones] = useState<string[]>([]);
   const [syncMode, setSyncMode] = useState<'start' | 'current' | 'marker'>('start');

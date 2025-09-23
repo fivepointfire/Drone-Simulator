@@ -26,7 +26,7 @@ export function Drone({ frame, scaleFactor }: DroneProps) {
   }, [scaleFactor]);
 
   // Animate rotors
-  useFrame((state) => {
+  useFrame((_state) => {
     rotorRefs.current.forEach((rotor, index) => {
       if (rotor) {
         // Counter-rotating pairs for realistic effect

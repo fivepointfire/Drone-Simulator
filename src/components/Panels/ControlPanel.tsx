@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { DroneInstance } from '../../types/DroneTypes';
 import { TimelineState } from '../../types/TimelineTypes';
-import { DroneManager } from '../DroneManager';
 import { StatsDisplay } from '../StatsDisplay';
 import { SceneControls } from './SceneControls';
 import { SyncControls } from './SyncControls';
@@ -46,7 +45,7 @@ export function ControlPanel({
   onRemoveDrone,
   onSetActiveDrone,
   onToggleVisibility,
-  onUpdateName,
+  onUpdateName: _onUpdateName,
   onClearError,
   currentStats,
   timelineState,

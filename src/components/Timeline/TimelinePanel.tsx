@@ -24,7 +24,7 @@ interface TimelinePanelProps {
 export function TimelinePanel({
   drones,
   timelineState,
-  playbackRange,
+  playbackRange: _playbackRange,
   onSeekTo,
   onPlay,
   onPause,
@@ -48,12 +48,12 @@ export function TimelinePanel({
 
   const timelineWidth = Math.max(800, viewportWidth - 350); // Fixed width based on viewport
   const effectiveWidth = timelineWidth; // Width stays constant, zoom affects time scale
-  const pixelsPerSecond = effectiveWidth / Math.max(timelineState.totalTime, 1);
+  // const pixelsPerSecond = effectiveWidth / Math.max(timelineState.totalTime, 1);
 
   const timeToPixels = useCallback((time: number) => {
     // Calculate visible time range based on zoom level
     const baseTimeRange = Math.max(timelineState.totalTime, 60);
-    const visibleTimeRange = baseTimeRange / timelineState.zoomLevel;
+    // const visibleTimeRange = baseTimeRange / timelineState.zoomLevel;
     const pixelPosition = (time / baseTimeRange) * effectiveWidth * timelineState.zoomLevel;
     return pixelPosition - viewportOffset;
   }, [timelineState.totalTime, timelineState.zoomLevel, effectiveWidth, viewportOffset]);
@@ -98,7 +98,7 @@ export function TimelinePanel({
     
     if (e.shiftKey) {
       // Panning mode
-      const baseTimeRange = Math.max(timelineState.totalTime, 60);
+      // const baseTimeRange = Math.max(timelineState.totalTime, 60);
       const maxOffset = (effectiveWidth * timelineState.zoomLevel) - effectiveWidth;
       const newOffset = Math.max(0, Math.min(maxOffset, viewportOffset - deltaX));
       setViewportOffset(newOffset);
@@ -139,7 +139,7 @@ export function TimelinePanel({
       setViewportOffset(newOffset);
     } else if (currentTimePixel > effectiveWidth - margin) {
       // Pan right to show current time
-      const baseTimeRange = Math.max(timelineState.totalTime, 60);
+      // const baseTimeRange = Math.max(timelineState.totalTime, 60);
       const maxOffset = (effectiveWidth * timelineState.zoomLevel) - effectiveWidth;
       const newOffset = Math.min(maxOffset, viewportOffset + (currentTimePixel - (effectiveWidth - margin)));
       setViewportOffset(newOffset);
