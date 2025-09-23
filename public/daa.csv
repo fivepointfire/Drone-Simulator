@@ -1,0 +1,6 @@
+drone_x,drone_y,drone_z,drone_ro,drone_pitch,drone_yaw
+0,0,0,0,0,0
+100,0,0,0,0,0
+100,100,0,0,0,90
+0,100,0,0,0,180
+0,0,0,0,0,270

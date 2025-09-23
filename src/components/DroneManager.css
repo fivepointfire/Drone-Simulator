@@ -1,0 +1,206 @@
+.drone-manager {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.drone-manager-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
+}
+
+.expand-toggle {
+  background: none;
+  border: none;
+  color: #4cafef;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.expand-toggle:hover {
+  transform: scale(1.1);
+}
+
+.drone-manager-header h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  flex: 1;
+}
+
+.drone-count {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.drone-manager-content {
+  padding: 16px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 6px;
+  color: #ff5050;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.clear-error {
+  background: none;
+  border: none;
+  color: #ff5050;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  margin-left: auto;
+}
+
+.no-drones {
+  text-align: center;
+}
+
+.add-drone-section {
+  margin-bottom: 20px;
+}
+
+.drone-list h3 {
+  margin: 0 0 12px 0;
+  color: #4cafef;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.drone-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.drone-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.drone-item.active {
+  background: rgba(76, 175, 239, 0.2);
+  border: 1px solid rgba(76, 175, 239, 0.4);
+}
+
+.drone-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.drone-color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.drone-name {
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.drone-name:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.drone-name-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #4cafef;
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: #fff;
+  font-size: 14px;
+  width: 120px;
+}
+
+.drone-frames {
+  color: #aaa;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.drone-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.drone-controls button {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+}
+
+.drone-controls button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.visibility-btn.hidden {
+  opacity: 0.5;
+}
+
+.select-btn.selected {
+  color: #4cafef;
+}
+
+.remove-btn:hover {
+  background: rgba(255, 80, 80, 0.2);
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: #aaa;
+  justify-content: center;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(76, 175, 239, 0.3);
+  border-top: 2px solid #4cafef;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,243 @@
+.app-layout {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  background: #000000;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.scene-panel {
+  flex: 1;
+  position: relative;
+  background: #000000;
+  transition: margin 0.3s ease;
+  width: 100%;
+  height: 100%;
+}
+
+.timeline-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: height 0.3s ease, margin 0.3s ease;
+  width: 100%;
+  overflow: hidden;
+}
+
+.timeline-resize-handle {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.timeline-resize-handle:hover .resize-line {
+  background: #4cafef;
+}
+
+.resize-line {
+  width: 60px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  transition: background 0.2s ease;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 40px;
+}
+
+.timeline-header h3 {
+  margin: 0;
+  color: #4cafef;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timeline-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.timeline-collapsed {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: #2a3441;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: margin 0.3s ease;
+  width: 100%;
+}
+
+.expand-timeline-btn {
+  background: none;
+  border: none;
+  color: #4cafef;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.expand-timeline-btn:hover {
+  background: rgba(76, 175, 239, 0.1);
+}
+
+.control-panel {
+  background: #2a3441;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: width 0.3s ease;
+}
+
+.control-panel-resize-handle {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.control-panel-resize-handle .resize-line {
+  width: 2px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  transition: background 0.2s ease;
+}
+
+.control-panel-resize-handle:hover .resize-line {
+  background: #4cafef;
+}
+
+.control-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 40px;
+}
+
+.control-panel-header h3 {
+  margin: 0;
+  color: #4cafef;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.control-panel-collapsed {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 30px;
+  background: #2a3441;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-lr;
+}
+
+.expand-control-btn {
+  background: none;
+  border: none;
+  color: #4cafef;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 12px 4px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  writing-mode: vertical-lr;
+}
+
+.expand-control-btn:hover {
+  background: rgba(76, 175, 239, 0.1);
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.collapse-btn:hover {
+  color: #4cafef;
+  background: rgba(76, 175, 239, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .control-panel {
+    width: 100vw !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .timeline-panel {
+    margin-right: 0 !important;
+  }
+  
+  .scene-panel {
+    margin-right: 0 !important;
+  }
+}
