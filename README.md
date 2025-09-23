@@ -48,8 +48,6 @@ A modern, production-ready drone flight simulator built with React Three Fiber, 
    npm run dev
    ```
 
-4. **Open your browser** and navigate to `http://localhost:5173`
-
 ### Building for Production
 
 ```bash
@@ -79,13 +77,6 @@ The simulator expects CSV files with the following columns:
 - `drone_pitch` or `pitch`: Pitch rotation (radians)
 - `drone_yaw` or `yaw`: Yaw rotation (radians)
 
-**Example CSV format**:
-```csv
-elapsed_time,drone_x,drone_y,drone_z,drone_roll,drone_pitch,drone_yaw
-0.0,0.0,0.0,0.0,0.0,0.0,0.0
-0.1,0.1,0.0,0.1,0.01,0.02,0.05
-0.2,0.2,0.0,0.2,0.02,0.04,0.10
-```
 
 ## 🎮 Controls & Usage
 
@@ -194,14 +185,8 @@ src/
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📄 License
-
-This project is part of a drone simulation system and is intended for educational and research purposes.
-
 ## 🔗 Repository
 
 **GitHub**: [https://github.com/fivepointfire/Drone-Simulator.git](https://github.com/fivepointfire/Drone-Simulator.git)
 
 ---
-
-**Built with ❤️ using React Three Fiber and TypeScript**
