@@ -19,6 +19,7 @@ interface TimelinePanelProps {
   onAddMarker: (time: number, label: string, type?: TimelineMarker['type']) => void;
   onRemoveMarker: (markerId: string) => void;
   onToggleDroneSelection: (droneId: string) => void;
+  onSetDroneOffset: (droneId: string, offsetSeconds: number) => void;
 }
 
 export function TimelinePanel({
@@ -36,10 +37,12 @@ export function TimelinePanel({
   onAddMarker,
   onRemoveMarker,
   onToggleDroneSelection,
+  onSetDroneOffset,
 }: TimelinePanelProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
+  const [draggingTrack, setDraggingTrack] = useState<{ droneId: string; startX: number; startOffset: number; secondsPerPixel: number } | null>(null);
   const [showMarkerDialog, setShowMarkerDialog] = useState(false);
   const [markerDialogTime, setMarkerDialogTime] = useState(0);
   const [newMarkerLabel, setNewMarkerLabel] = useState('');
@@ -62,6 +65,43 @@ export function TimelinePanel({
     const baseTimeRange = Math.max(timelineState.totalTime, 60);
     const adjustedPixels = pixels + viewportOffset;
     return (adjustedPixels / (effectiveWidth * timelineState.zoomLevel)) * baseTimeRange;
+  }, [timelineState.totalTime, timelineState.zoomLevel, effectiveWidth, viewportOffset]);
+
+  // Helpers to compute tick intervals consistently (used by ruler, grid, snapping)
+  const getTickIntervals = useCallback(() => {
+    const baseTimeRange = Math.max(timelineState.totalTime, 60);
+    const totalPixelWidth = effectiveWidth * timelineState.zoomLevel;
+    const pixelsPerSecond = totalPixelWidth / baseTimeRange;
+    const minPixelsBetweenLabels = 80;
+    const minTimeStep = minPixelsBetweenLabels / pixelsPerSecond;
+
+    const niceIntervals = [
+      0.01, 0.02, 0.05, 0.1, 0.2, 0.5,
+      1, 2, 5, 10, 15, 30,
+      60, 120, 300, 600, 900, 1800,
+      3600, 7200, 10800, 21600, 43200, 86400
+    ];
+
+    let timeStep = niceIntervals.find(interval => interval >= minTimeStep) || niceIntervals[niceIntervals.length - 1];
+
+    let minorStep = timeStep;
+    if (timeStep >= 60) {
+      minorStep = timeStep / 10;
+    } else if (timeStep >= 10) {
+      minorStep = timeStep / 5;
+    } else if (timeStep >= 1) {
+      minorStep = timeStep / 5;
+    } else if (timeStep >= 0.1) {
+      minorStep = timeStep / 5;
+    } else {
+      minorStep = timeStep / 2;
+    }
+
+    // Visible time window for rendering
+    const startTime = (viewportOffset / totalPixelWidth) * baseTimeRange;
+    const endTime = ((viewportOffset + effectiveWidth) / totalPixelWidth) * baseTimeRange;
+
+    return { timeStep, minorStep, startTime, endTime };
   }, [timelineState.totalTime, timelineState.zoomLevel, effectiveWidth, viewportOffset]);
 
   const handleTimelineClick = useCallback((e: React.MouseEvent) => {
@@ -114,19 +154,31 @@ export function TimelinePanel({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setDraggingTrack(null);
   }, []);
 
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+    const onMove = (e: MouseEvent) => {
+      if (draggingTrack) {
+        const deltaPixels = e.clientX - draggingTrack.startX;
+        // Snap deltaTime to nearest minor tick interval
+        const { minorStep } = getTickIntervals();
+        const rawDeltaTime = deltaPixels * draggingTrack.secondsPerPixel;
+        const snappedDelta = Math.round(rawDeltaTime / minorStep) * minorStep;
+        const newOffset = Math.max(0, draggingTrack.startOffset + snappedDelta);
+        onSetDroneOffset(draggingTrack.droneId, newOffset);
+        return;
+      }
+      handleMouseMove(e);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp, draggingTrack, pixelsToTime, onSetDroneOffset]);
 
   // Auto-pan timeline to follow current time
   useEffect(() => {
@@ -159,21 +211,29 @@ export function TimelinePanel({
   // Handle mouse wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    
+    if (!timelineRef.current) return;
+
+    const rect = timelineRef.current.getBoundingClientRect();
+    const mouseX = Math.max(0, Math.min(e.clientX - rect.left, effectiveWidth));
+
+    // Compute focal time under cursor BEFORE zoom
+    const baseTimeRange = Math.max(timelineState.totalTime, 60);
+    const focalTime = ((mouseX + viewportOffset) / (effectiveWidth * timelineState.zoomLevel)) * baseTimeRange;
+
     const zoomFactor = 1.1;
     const currentZoom = timelineState.zoomLevel;
-    
-    let newZoom;
-    if (e.deltaY < 0) {
-      // Zoom in
-      newZoom = Math.min(currentZoom * zoomFactor, 20);
-    } else {
-      // Zoom out
-      newZoom = Math.max(currentZoom / zoomFactor, 0.1);
-    }
-    
+    const newZoom = e.deltaY < 0 ? Math.min(currentZoom * zoomFactor, 20) : Math.max(currentZoom / zoomFactor, 0.1);
+
+    // Update zoom
     onSetZoomLevel(newZoom);
-  }, [timelineState.zoomLevel, onSetZoomLevel]);
+
+    // Adjust viewportOffset to keep focalTime anchored under cursor
+    const totalPixelWidth = effectiveWidth * newZoom;
+    let newOffset = (focalTime / baseTimeRange) * totalPixelWidth - mouseX;
+    const maxOffset = Math.max(0, totalPixelWidth - effectiveWidth);
+    newOffset = Math.max(0, Math.min(maxOffset, newOffset));
+    setViewportOffset(newOffset);
+  }, [timelineRef, effectiveWidth, timelineState.totalTime, timelineState.zoomLevel, viewportOffset, onSetZoomLevel]);
 
   const handleAddMarker = () => {
     if (newMarkerLabel.trim()) {
@@ -184,100 +244,68 @@ export function TimelinePanel({
   };
 
   const renderTimeRuler = () => {
-    // Calculate visible time range based on zoom and viewport
+    const { timeStep, minorStep, startTime, endTime } = getTickIntervals();
     const baseTimeRange = Math.max(timelineState.totalTime, 60);
     const totalPixelWidth = effectiveWidth * timelineState.zoomLevel;
     const pixelsPerSecond = totalPixelWidth / baseTimeRange;
-    const minPixelsBetweenLabels = 80; // Minimum pixels between labels to prevent overlap
-    
-    // Calculate the minimum time step needed to avoid overlap
-    const minTimeStep = minPixelsBetweenLabels / pixelsPerSecond;
-    
-    // Calculate visible time range in the current viewport
-    const startTime = (viewportOffset / totalPixelWidth) * baseTimeRange;
-    const endTime = ((viewportOffset + effectiveWidth) / totalPixelWidth) * baseTimeRange;
-    
-    // Define nice time intervals in seconds (more granular for better zoom support)
-    const niceIntervals = [
-      0.01, 0.02, 0.05, 0.1, 0.2, 0.5, // Fine intervals for high zoom
-      1, 2, 5, 10, 15, 30, // Sub-minute intervals
-      60, 120, 300, 600, 900, 1800, // 1min, 2min, 5min, 10min, 15min, 30min
-      3600, 7200, 10800, 21600, 43200, 86400 // 1hr, 2hr, 3hr, 6hr, 12hr, 24hr
-    ];
-    
-    // Find the smallest nice interval that's larger than our minimum
-    let timeStep = niceIntervals.find(interval => interval >= minTimeStep) || niceIntervals[niceIntervals.length - 1];
-    
-    // Generate major tick marks
-    const majorTicks = [];
-    const minorTicks = [];
-    
-    // Calculate minor tick interval with better granularity
-    let minorStep = timeStep;
-    if (timeStep >= 60) {
-      minorStep = timeStep / 10; // For minutes/hours, use 1/10
-    } else if (timeStep >= 10) {
-      minorStep = timeStep / 5; // For 10+ seconds, use 1/5
-    } else if (timeStep >= 1) {
-      minorStep = timeStep / 5; // For 1+ seconds, use 1/5
-    } else if (timeStep >= 0.1) {
-      minorStep = timeStep / 5; // For 0.1+ seconds, use 1/5
-    } else {
-      minorStep = timeStep / 2; // For very fine intervals, use 1/2
-    }
-    
-    // Generate major ticks for visible time range
+
+    const majorTicks: JSX.Element[] = [];
+    const minorTicks: JSX.Element[] = [];
+
     const startTick = Math.floor(startTime / timeStep) * timeStep;
     const endTick = Math.ceil(endTime / timeStep) * timeStep;
-    
     for (let time = startTick; time <= endTick; time += timeStep) {
       const x = timeToPixels(time);
-      
-      // Only render if visible in viewport
       if (x >= -50 && x <= effectiveWidth + 50) {
         majorTicks.push(
           <div key={`major-${time}`} className="time-tick major">
-            <div 
-              className="tick-line major"
-              style={{ left: x }}
-            />
-            <div 
-              className="tick-label"
-              style={{ left: x }}
-            >
+            <div className="tick-line major" style={{ left: x }} />
+            <div className="tick-label" style={{ left: x }}>
               {formatTime(time)}
             </div>
           </div>
         );
       }
     }
-    
-    // Generate minor ticks (only if zoom level is high enough)
-    if (pixelsPerSecond > 2) { // Show minor ticks when zoomed in enough
+
+    if (pixelsPerSecond > 2) {
       const startMinorTick = Math.floor(startTime / minorStep) * minorStep;
       const endMinorTick = Math.ceil(endTime / minorStep) * minorStep;
-      
       for (let time = startMinorTick; time <= endMinorTick; time += minorStep) {
-        // Skip if this coincides with a major tick
-        if (Math.abs(time % timeStep) > 0.001) { // Use small epsilon for floating point comparison
+        if (Math.abs(time % timeStep) > 0.001) {
           const x = timeToPixels(time);
-          
-          // Only render if visible in viewport
           if (x >= -10 && x <= effectiveWidth + 10) {
             minorTicks.push(
               <div key={`minor-${time}`} className="time-tick minor">
-                <div 
-                  className="tick-line minor"
-                  style={{ left: x }}
-                />
+                <div className="tick-line minor" style={{ left: x }} />
               </div>
             );
           }
         }
       }
     }
-    
     return [...minorTicks, ...majorTicks];
+  };
+
+  const renderGridLines = () => {
+    const { timeStep, minorStep, startTime, endTime } = getTickIntervals();
+    const lines: JSX.Element[] = [];
+
+    const startMinorTick = Math.floor(startTime / minorStep) * minorStep;
+    const endMinorTick = Math.ceil(endTime / minorStep) * minorStep;
+    for (let time = startMinorTick; time <= endMinorTick; time += minorStep) {
+      const x = timeToPixels(time);
+      if (x < -20 || x > effectiveWidth + 20) continue;
+      const isMajor = Math.abs(time % timeStep) <= 0.001;
+      lines.push(
+        <div
+          key={`grid-${time}`}
+          className={`grid-line ${isMajor ? 'major' : 'minor'}`}
+          style={{ left: x }}
+        />
+      );
+    }
+    return <div className="grid-lines" aria-hidden>{lines}</div>;
   };
 
   const renderMarkers = () => {
@@ -307,9 +335,10 @@ export function TimelinePanel({
       // Calculate the track width and position based on viewport
       const droneStartTime = drone.frames[0]?.time || 0;
       const droneEndTime = drone.frames[drone.frames.length - 1]?.time || 0;
+      const offset = timelineState.droneOffsets[drone.id] || 0;
       
-      const startX = timeToPixels(droneStartTime);
-      const endX = timeToPixels(droneEndTime);
+      const startX = timeToPixels(droneStartTime + offset);
+      const endX = timeToPixels(droneEndTime + offset);
       const trackWidth = Math.max(0, endX - startX);
       
       // Only render if the track is visible in the viewport
@@ -320,7 +349,7 @@ export function TimelinePanel({
       return (
         <div
           key={drone.id}
-          className={`drone-track ${isSelected ? 'selected' : ''}`}
+          className={`drone-track ${isSelected ? 'selected' : ''} ${draggingTrack?.droneId === drone.id ? 'dragging' : ''}`}
           style={{ 
             top: y,
             left: Math.max(0, startX),
@@ -330,6 +359,13 @@ export function TimelinePanel({
             borderLeft: `3px solid ${drone.color}`,
           }}
           onClick={() => onToggleDroneSelection(drone.id)}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            // Capture seconds-per-pixel at drag start to make dragging independent of later zoom changes
+            const baseTimeRange = Math.max(timelineState.totalTime, 60);
+            const secondsPerPixel = baseTimeRange / (effectiveWidth * timelineState.zoomLevel);
+            setDraggingTrack({ droneId: drone.id, startX: e.clientX, startOffset: offset, secondsPerPixel });
+          }}
         >
           <div className="track-header">
             <div 
@@ -348,7 +384,7 @@ export function TimelinePanel({
               <div 
                 className="flight-bar"
                 style={{
-                  width: timeToPixels(drone.frames[drone.frames.length - 1].time),
+                  width: '100%',
                   background: `linear-gradient(90deg, ${drone.color}40, ${drone.color}80)`,
                 }}
               />
@@ -441,6 +477,8 @@ export function TimelinePanel({
                   width: '100%'
                 }}
               >
+                {/* Grid Lines aligned with ticks */}
+                {renderGridLines()}
                 {/* Current Time Indicator */}
                 <div 
                   className="current-time-indicator"

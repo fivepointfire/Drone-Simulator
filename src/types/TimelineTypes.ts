@@ -12,6 +12,8 @@ export interface TimelineState {
   playMode: 'simultaneous' | 'synchronous';
   loopEnabled: boolean;
   markers: TimelineMarker[];
+  // Per-drone start time offsets in seconds (can be negative)
+  droneOffsets: Record<string, number>;
 }
 
 export interface TimelineMarker {

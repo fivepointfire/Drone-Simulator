@@ -20,6 +20,7 @@ export function useTimeline({ drones, onTimeChange }: UseTimelineOptions) {
     playMode: 'simultaneous',
     loopEnabled: false,
     markers: [],
+    droneOffsets: {},
   });
 
   const [playbackRange, setPlaybackRange] = useState<PlaybackRange>({
@@ -32,22 +33,44 @@ export function useTimeline({ drones, onTimeChange }: UseTimelineOptions) {
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
 
-  // Calculate total timeline duration from all drones
+  // Reconcile offsets whenever the drone list changes
+  useEffect(() => {
+    setTimelineState(prev => {
+      const nextOffsets: Record<string, number> = { ...prev.droneOffsets };
+      // Ensure all drones have an offset entry
+      for (const d of drones) {
+        if (nextOffsets[d.id] === undefined) nextOffsets[d.id] = 0;
+      }
+      // Remove offsets for drones that no longer exist
+      for (const id of Object.keys(nextOffsets)) {
+        if (!drones.find(d => d.id === id)) {
+          delete nextOffsets[id];
+        }
+      }
+      if (JSON.stringify(nextOffsets) === JSON.stringify(prev.droneOffsets)) return prev;
+      return { ...prev, droneOffsets: nextOffsets };
+    });
+  }, [drones]);
+
+  // Calculate total timeline duration from all drones (including offsets)
   const calculateTotalTime = useCallback(() => {
     if (drones.length === 0) return 0;
     
     if (timelineState.playMode === 'simultaneous') {
-      // In simultaneous mode, use the longest drone duration
-      return Math.max(...drones.map(drone => 
-        drone.frames.length > 0 ? drone.frames[drone.frames.length - 1].time : 0
-      ));
+      // In simultaneous mode, consider each drone's offset + duration
+      const ends = drones.map(drone => {
+        const duration = drone.frames.length > 0 ? drone.frames[drone.frames.length - 1].time : 0;
+        const offset = timelineState.droneOffsets[drone.id] || 0;
+        return offset + duration;
+      });
+      return Math.max(...ends);
     } else {
       // In synchronous mode, sum all drone durations
       return drones.reduce((total, drone) => 
         total + (drone.frames.length > 0 ? drone.frames[drone.frames.length - 1].time : 0), 0
       );
     }
-  }, [drones, timelineState.playMode]);
+  }, [drones, timelineState.playMode, timelineState.droneOffsets]);
 
   // Update total time when drones or play mode changes
   useEffect(() => {
@@ -205,6 +228,14 @@ export function useTimeline({ drones, onTimeChange }: UseTimelineOptions) {
     }));
   }, []);
 
+  const setDroneOffset = useCallback((droneId: string, offsetSeconds: number) => {
+    const clamped = Math.max(0, offsetSeconds); // clamp to >= 0 for now
+    setTimelineState(prev => ({
+      ...prev,
+      droneOffsets: { ...prev.droneOffsets, [droneId]: clamped },
+    }));
+  }, []);
+
   return {
     timelineState,
     playbackRange,
@@ -221,5 +252,6 @@ export function useTimeline({ drones, onTimeChange }: UseTimelineOptions) {
     removeMarker,
     updatePlaybackRange,
     toggleDroneSelection,
+    setDroneOffset,
   };
 }

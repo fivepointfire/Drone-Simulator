@@ -37,13 +37,17 @@ function App() {
     }, []),
   });
 
-  // Get current frame and stats for active drone
+  // Get current frame and stats for active drone (respect per-drone offset)
   const getCurrentFrame = useCallback(() => {
     if (!activeDrone || activeDrone.frames.length === 0) return null;
-    
-    const frameIndex = findFrameIndexAtTime(activeDrone.frames, timeline.timelineState.currentTime);
+    const offset = timeline.timelineState.droneOffsets[activeDrone.id] || 0;
+    const effectiveTime = timeline.timelineState.currentTime - offset;
+    if (effectiveTime < 0) return null;
+    const lastTime = activeDrone.frames[activeDrone.frames.length - 1].time;
+    if (effectiveTime > lastTime) return null;
+    const frameIndex = findFrameIndexAtTime(activeDrone.frames, effectiveTime);
     return activeDrone.frames[frameIndex] || null;
-  }, [activeDrone, timeline.timelineState.currentTime]);
+  }, [activeDrone, timeline.timelineState.currentTime, timeline.timelineState.droneOffsets]);
 
   const getCurrentStats = useCallback((): DroneStats | null => {
     const frame = getCurrentFrame();
@@ -124,6 +128,7 @@ function App() {
       onAddMarker={timeline.addMarker}
       onRemoveMarker={timeline.removeMarker}
       onToggleDroneSelection={timeline.toggleDroneSelection}
+      onSetDroneOffset={timeline.setDroneOffset}
     />
   );
 

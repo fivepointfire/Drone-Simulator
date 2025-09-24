@@ -212,6 +212,31 @@
   -ms-user-select: none;
 }
 
+.grid-lines {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  opacity: 0.25;
+}
+
+.grid-line.major {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.grid-line.minor {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .current-time-indicator {
   position: absolute;
   top: 0;
@@ -305,6 +330,12 @@
 
 .drone-track.selected {
   box-shadow: inset 0 0 0 2px #4cafef;
+}
+
+.drone-track.dragging {
+  opacity: 0.9;
+  outline: 1px dashed #4cafef;
+  cursor: grabbing;
 }
 
 .track-header {
