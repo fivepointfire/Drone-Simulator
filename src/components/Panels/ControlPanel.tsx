@@ -235,6 +235,30 @@ export function ControlPanel({
         )}
       </div>
 
+      {/* Analytics Section */}
+      <div className="panel-section">
+        <div className="section-header">
+          <div className="section-title">
+            <span className="section-icon">📊</span>
+            <span className="section-name">Analytics</span>
+          </div>
+        </div>
+        <div className="section-content">
+          <div className="analytics-section">
+            <button 
+              className="analytics-btn"
+              onClick={() => window.open('/analytics.html', '_blank', 'width=1400,height=900')}
+              title="Open analytics dashboard in new window"
+            >
+              📈 Open Analytics Dashboard
+            </button>
+            <p className="analytics-description">
+              View detailed charts and statistics of your drone data
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Section */}
       <div className="panel-section">
         {renderSectionHeader('stats', 'Telemetry', '▣')}

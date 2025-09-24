@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .analytics-header {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            padding: 20px 30px;
+            border-bottom: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4cafef;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #4cafef;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #3a9fd4;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #ccc;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .main-content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #333;
+        }
+
+        .chart-area {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #ccc;
+        }
+
+        .control-group select,
+        .control-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #4cafef;
+            box-shadow: 0 0 0 2px rgba(76, 175, 239, 0.1);
+        }
+
+        .drone-list {
+            margin-top: 15px;
+        }
+
+        .drone-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .drone-item:last-child {
+            border-bottom: none;
+        }
+
+        .drone-checkbox {
+            margin-right: 10px;
+        }
+
+        .drone-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #555;
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .stats-panel {
+            margin-top: 20px;
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .stats-table th {
+            background: #333;
+            color: #4cafef;
+            font-weight: 600;
+        }
+
+        .no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            text-align: center;
+        }
+
+        .no-data h3 {
+            margin-bottom: 10px;
+            color: #999;
+        }
+
+        .upload-area {
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #4cafef;
+            background: rgba(76, 175, 239, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #4cafef;
+            background: rgba(76, 175, 239, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="analytics-header">
+        <div class="header-title">
+            <h1>📊 Drone Analytics Dashboard</h1>
+        </div>
+        <div class="header-controls">
+            <button class="btn btn-secondary" onclick="window.close()">← Back to Simulator</button>
+            <button class="btn" onclick="exportChart()">📥 Export Chart</button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="dashboard-grid">
+            <!-- Sidebar Controls -->
+            <aside class="sidebar">
+                <div class="control-group">
+                    <label>📁 Upload CSV Data</label>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="csvInput" accept=".csv" multiple style="display: none;">
+                        <p>📎 Drop CSV files here or click to browse</p>
+                        <small>Supports multiple drone CSV files</small>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>📈 Chart Type</label>
+                    <select id="chartType">
+                        <option value="position-x">X Position</option>
+                        <option value="position-y">Y Position</option>
+                        <option value="position-z">Z Position / Altitude</option>
+                        <option value="roll">Roll Angle</option>
+                        <option value="pitch">Pitch Angle</option>
+                        <option value="yaw">Yaw Angle</option>
+                        <option value="speed">Speed</option>
+                        <option value="distance">Distance Traveled</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>🎯 Select Drones</label>
+                    <div class="drone-list" id="droneList">
+                        <p style="color: #666; font-style: italic;">No drones loaded</p>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn" onclick="toggleStats()" id="statsToggle">📊 Show Statistics</button>
+                </div>
+            </aside>
+
+            <!-- Main Chart Area -->
+            <section class="chart-area">
+                <div class="no-data" id="noDataMessage">
+                    <h3>Welcome to Analytics Dashboard</h3>
+                    <p>Upload CSV files to start analyzing drone data</p>
+                    <p style="margin-top: 10px; font-size: 14px; color: #555;">
+                        Supported formats: CSV files with time, position (x,y,z), and rotation (roll,pitch,yaw) data
+                    </p>
+                </div>
+                
+                <div class="chart-container" id="chartContainer" style="display: none;">
+                    <canvas id="mainChart"></canvas>
+                </div>
+
+                <div class="stats-panel" id="statsPanel" style="display: none;">
+                    <h4>📈 Statistics Summary</h4>
+                    <table class="stats-table" id="statsTable">
+                        <thead>
+                            <tr>
+                                <th>Drone</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Average</th>
+                                <th>Std Dev</th>
+                                <th>Range</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let droneData = [];
+        let chart = null;
+        let showStats = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            setupEventListeners();
+        });
+
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const csvInput = document.getElementById('csvInput');
+
+            // Click to upload
+            uploadArea.addEventListener('click', () => csvInput.click());
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // File input change
+            csvInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('chartType').addEventListener('change', updateChart);
+        }
+
+        function handleFiles(files) {
+            droneData = [];
+            const filePromises = [];
+
+            for (let file of files) {
+                if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                    filePromises.push(parseCSV(file));
+                }
+            }
+
+            Promise.all(filePromises).then(() => {
+                updateDroneList();
+                updateChart();
+                showChartArea();
+            });
+        }
+
+        function parseCSV(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    
+                    const data = {
+                        name: file.name.replace('.csv', ''),
+                        color: generateRandomColor(),
+                        frames: []
+                    };
+
+                    for (let i = 1; i < lines.length; i++) {
+                        if (lines[i].trim()) {
+                            const values = lines[i].split(',');
+                            const frame = {};
+                            
+                            headers.forEach((header, index) => {
+                                const value = parseFloat(values[index]);
+                                if (!isNaN(value)) {
+                                    frame[header] = value;
+                                }
+                            });
+                            
+                            // Use elapsed_time if available, otherwise use index
+                            if (frame.elapsed_time !== undefined) {
+                                frame.time = frame.elapsed_time;
+                            } else {
+                                frame.time = i * 0.1; // Default time step
+                            }
+                            
+                            if (Object.keys(frame).length > 0) {
+                                data.frames.push(frame);
+                            }
+                        }
+                    }
+
+                    if (data.frames.length > 0) {
+                        droneData.push(data);
+                        console.log(`Loaded ${data.name} with ${data.frames.length} frames`);
+                        console.log('Sample frame:', data.frames[0]); // Debug info
+                    }
+                    resolve();
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function generateRandomColor() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function updateDroneList() {
+            const droneList = document.getElementById('droneList');
+            
+            if (droneData.length === 0) {
+                droneList.innerHTML = '<p style="color: #666; font-style: italic;">No drones loaded</p>';
+                return;
+            }
+
+            droneList.innerHTML = droneData.map((drone, index) => `
+                <div class="drone-item">
+                    <input type="checkbox" class="drone-checkbox" id="drone-${index}" checked onchange="updateChart()">
+                    <div class="drone-color" style="background-color: ${drone.color}"></div>
+                    <label for="drone-${index}">${drone.name}</label>
+                </div>
+            `).join('');
+        }
+
+        function getSelectedDrones() {
+            return droneData.filter((_, index) => {
+                const checkbox = document.getElementById(`drone-${index}`);
+                return checkbox && checkbox.checked;
+            });
+        }
+
+        function updateChart() {
+            const selectedDrones = getSelectedDrones();
+            const chartType = document.getElementById('chartType').value;
+
+            if (selectedDrones.length === 0) {
+                showNoDataMessage();
+                return;
+            }
+
+            const datasets = selectedDrones.map(drone => {
+                const data = drone.frames.map((frame) => {
+                    const yValue = getValueByType(frame, chartType);
+                    if (yValue === undefined || isNaN(yValue)) return null;
+                    
+                    return {
+                        x: frame.time || frame.elapsed_time || 0,
+                        y: yValue
+                    };
+                }).filter(point => point !== null);
+
+                return {
+                    label: drone.name,
+                    data: data,
+                    borderColor: drone.color,
+                    backgroundColor: drone.color + '20',
+                    fill: false,
+                    tension: 0.1
+                };
+            });
+
+            renderChart(datasets, chartType);
+            updateStatistics(selectedDrones, chartType);
+        }
+
+        function getValueByType(frame, type) {
+            // Map chart types to your actual CSV column names
+            const mappings = {
+                'position-x': 'drone_x',
+                'position-y': 'drone_y', 
+                'position-z': 'drone_z',
+                'roll': 'drone_roll',
+                'pitch': 'drone_pitch',
+                'yaw': 'drone_yaw',
+                'speed': calculateSpeed(frame),
+                'distance': calculateDistance(frame)
+            };
+            
+            if (type === 'speed') {
+                return calculateSpeed(frame);
+            } else if (type === 'distance') {
+                return calculateDistance(frame);
+            }
+            
+            return frame[mappings[type]];
+        }
+
+        function calculateSpeed(frame) {
+            // Calculate speed from velocity components if available
+            if (frame.drone_velocity_linear_x !== undefined && 
+                frame.drone_velocity_linear_y !== undefined && 
+                frame.drone_velocity_linear_z !== undefined) {
+                const vx = frame.drone_velocity_linear_x || 0;
+                const vy = frame.drone_velocity_linear_y || 0;
+                const vz = frame.drone_velocity_linear_z || 0;
+                return Math.sqrt(vx * vx + vy * vy + vz * vz);
+            }
+            return 0;
+        }
+
+        function calculateDistance(frame) {
+            // Calculate distance from origin
+            if (frame.drone_x !== undefined && frame.drone_y !== undefined && frame.drone_z !== undefined) {
+                const x = frame.drone_x || 0;
+                const y = frame.drone_y || 0;
+                const z = frame.drone_z || 0;
+                return Math.sqrt(x * x + y * y + z * z);
+            }
+            return 0;
+        }
+
+        function renderChart(datasets, chartType) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            const chartLabels = {
+                'position-x': 'X Position (m)',
+                'position-y': 'Y Position (m)',
+                'position-z': 'Z Position / Altitude (m)',
+                'roll': 'Roll Angle (degrees)',
+                'pitch': 'Pitch Angle (degrees)',
+                'yaw': 'Yaw Angle (degrees)',
+                'speed': 'Speed (m/s)',
+                'distance': 'Distance (m)'
+            };
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: chartLabels[chartType] || 'Drone Data',
+                            color: '#4cafef',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Time (s)',
+                                color: '#ffffff'
+                            },
+                            ticks: { color: '#cccccc' },
+                            grid: { color: '#333333' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: chartLabels[chartType] || 'Value',
+                                color: '#ffffff'
+                            },
+                            ticks: { color: '#cccccc' },
+                            grid: { color: '#333333' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStatistics(selectedDrones, chartType) {
+            if (!showStats) return;
+
+            const statsTableBody = document.querySelector('#statsTable tbody');
+            statsTableBody.innerHTML = '';
+
+            selectedDrones.forEach(drone => {
+                const values = drone.frames.map(frame => getValueByType(frame, chartType)).filter(v => v !== undefined);
+                
+                if (values.length === 0) return;
+
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
+                const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+                const std = Math.sqrt(variance);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            <div class="drone-color" style="background-color: ${drone.color}; width: 12px; height: 12px; margin-right: 8px;"></div>
+                            ${drone.name}
+                        </div>
+                    </td>
+                    <td>${min.toFixed(3)}</td>
+                    <td>${max.toFixed(3)}</td>
+                    <td>${avg.toFixed(3)}</td>
+                    <td>${std.toFixed(3)}</td>
+                    <td>${(max - min).toFixed(3)}</td>
+                `;
+                statsTableBody.appendChild(row);
+            });
+        }
+
+        function showChartArea() {
+            document.getElementById('noDataMessage').style.display = 'none';
+            document.getElementById('chartContainer').style.display = 'block';
+        }
+
+        function showNoDataMessage() {
+            document.getElementById('noDataMessage').style.display = 'flex';
+            document.getElementById('chartContainer').style.display = 'none';
+            document.getElementById('statsPanel').style.display = 'none';
+        }
+
+        function toggleStats() {
+            showStats = !showStats;
+            const statsPanel = document.getElementById('statsPanel');
+            const statsToggle = document.getElementById('statsToggle');
+            
+            if (showStats) {
+                statsPanel.style.display = 'block';
+                statsToggle.textContent = '📊 Hide Statistics';
+                updateChart();
+            } else {
+                statsPanel.style.display = 'none';
+                statsToggle.textContent = '📊 Show Statistics';
+            }
+        }
+
+        function exportChart() {
+            if (chart) {
+                const link = document.createElement('a');
+                link.download = 'drone-chart.png';
+                link.href = chart.toBase64Image();
+                link.click();
+            }
+        }
+    </script>
+</body>
+</html>
