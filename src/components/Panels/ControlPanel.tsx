@@ -3,7 +3,6 @@ import { DroneInstance } from '../../types/DroneTypes';
 import { TimelineState } from '../../types/TimelineTypes';
 import { StatsDisplay } from '../StatsDisplay';
 import { SceneControls } from './SceneControls';
-import { SyncControls } from './SyncControls';
 import './ControlPanel.css';
 
 interface ControlPanelProps {
@@ -34,7 +33,7 @@ interface ControlPanelProps {
   onSceneConfigChange: (config: any) => void;
 }
 
-type PanelSection = 'drones' | 'stats' | 'scene' | 'sync';
+type PanelSection = 'drones' | 'stats' | 'scene';
 
 export function ControlPanel({
   drones,
@@ -232,26 +231,7 @@ export function ControlPanel({
         )}
       </div>
 
-      {/* Synchronization Section */}
-      <div className="panel-section">
-        {renderSectionHeader('sync', 'Sync Tools', '🔄')}
-        {!collapsedSections.has('sync') && (
-          <div className="section-content">
-            <SyncControls
-              drones={drones}
-              timelineState={timelineState}
-              onSyncDrones={(droneIds: string[]) => {
-                console.log('Sync drones:', droneIds);
-                // TODO: Implement synchronization logic
-              }}
-              onAlignToMarker={(markerId: string) => {
-                console.log('Align to marker:', markerId);
-                // TODO: Implement marker alignment
-              }}
-            />
-          </div>
-        )}
-      </div>
+      {/* Synchronization Section removed */}
 
       {/* Quick Actions */}
       <div className="panel-section quick-actions">

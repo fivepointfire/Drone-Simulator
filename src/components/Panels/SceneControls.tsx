@@ -4,7 +4,7 @@ interface SceneControlsProps {
     showGrid: boolean;
     showAxes: boolean;
     showFlightPaths: boolean;
-    cameraMode: 'free' | 'follow' | 'orbit';
+    cameraMode: 'free' | 'follow';
     scaleFactor: number;
   };
   onChange: (config: any) => void;
@@ -16,7 +16,7 @@ export function SceneControls({ config, onChange, droneCount }: SceneControlsPro
     onChange({ ...config, [key]: !config[key as keyof typeof config] });
   };
 
-  const handleCameraModeChange = (mode: 'free' | 'follow' | 'orbit') => {
+  const handleCameraModeChange = (mode: 'free' | 'follow') => {
     onChange({ ...config, cameraMode: mode });
   };
 
@@ -75,16 +75,6 @@ export function SceneControls({ config, onChange, droneCount }: SceneControlsPro
               disabled={droneCount === 0}
             />
             <span className="control-label">Follow Drone</span>
-          </label>
-          <label className="control-item">
-            <input
-              type="radio"
-              name="cameraMode"
-              checked={config.cameraMode === 'orbit'}
-              onChange={() => handleCameraModeChange('orbit')}
-              disabled={droneCount === 0}
-            />
-            <span className="control-label">Orbit Drone</span>
           </label>
         </div>
       </div>

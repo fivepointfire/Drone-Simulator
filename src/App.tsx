@@ -1,5 +1,5 @@
 import { Suspense, useState, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Drone } from './components/Drone';
 import { Grid, Axes, FlightPath, Lights } from './components/SceneComponents';
@@ -22,7 +22,7 @@ function App() {
     showGrid: true,
     showAxes: true,
     showFlightPaths: true,
-    cameraMode: 'free' as 'free' | 'follow' | 'orbit',
+    cameraMode: 'free' as 'free' | 'follow',
     scaleFactor: SIMULATION_CONFIG.scaleFactor,
   });
 
@@ -65,6 +65,25 @@ function App() {
 
   // No welcome screen - always show the main interface
 
+  // Camera controller to implement camera modes
+  function CameraController() {
+    const { camera } = useThree();
+    const [theta, setTheta] = useState(0);
+
+    useFrame((_state, delta) => {
+      if (!activeDrone || !currentFrame) return;
+      if (sceneConfig.cameraMode === 'follow') {
+        // Simple follow: place camera behind and above the drone
+        const target = [currentFrame.x * sceneConfig.scaleFactor, -currentFrame.y * sceneConfig.scaleFactor, currentFrame.z * sceneConfig.scaleFactor] as const;
+        const offset = [150, 80, 150] as const;
+        camera.position.set(target[0] + offset[0], target[1] + offset[1], target[2] + offset[2]);
+        camera.lookAt(target[0], target[1], target[2]);
+      }
+      // 'free' mode leaves camera under OrbitControls
+    });
+    return null;
+  }
+
   // Main simulator interface
   const scenePanel = (
     <Canvas
@@ -78,6 +97,7 @@ function App() {
     >
       <Suspense fallback={null}>
         <Lights />
+        <CameraController />
         
         {/* Scene elements */}
         {sceneConfig.showGrid && <Grid size={1000} divisions={50} />}
@@ -104,9 +124,11 @@ function App() {
         
         {/* Camera controls */}
         <OrbitControls
-          enablePan={true}
+          enablePan={sceneConfig.cameraMode === 'free'}
           enableZoom={true}
-          enableRotate={true}
+          enableRotate={sceneConfig.cameraMode === 'free'}
+          enableDamping={true}
+          dampingFactor={0.08}
         />
       </Suspense>
     </Canvas>
