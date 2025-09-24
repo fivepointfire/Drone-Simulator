@@ -247,13 +247,57 @@ export function ControlPanel({
           <div className="analytics-section">
             <button 
               className="analytics-btn"
-              onClick={() => window.open('/analytics.html', '_blank', 'width=1400,height=900')}
-              title="Open analytics dashboard in new window"
+              onClick={() => {
+                // Prepare drone data for analytics
+                const analyticsData = drones
+                  .filter(drone => drone.frames.length > 0)
+                  .map(drone => ({
+                    name: drone.name,
+                    color: drone.color,
+                    frames: drone.frames.map(frame => ({
+                      drone_x: frame.x,
+                      drone_y: frame.y,
+                      drone_z: frame.z,
+                      drone_roll: frame.roll,
+                      drone_pitch: frame.pitch,
+                      drone_yaw: frame.yaw,
+                      elapsed_time: frame.time
+                    }))
+                  }));
+                
+                // Open analytics with data
+                const analyticsWindow = window.open('/analytics.html', '_blank', 'width=1400,height=900');
+                
+                // Wait for analytics window to load, then send data
+                if (analyticsWindow) {
+                  const sendData = () => {
+                    try {
+                      analyticsWindow.postMessage({
+                        type: 'LOAD_DRONE_DATA',
+                        data: analyticsData
+                      }, '*');
+                    } catch (error) {
+                      console.warn('Failed to send data to analytics window:', error);
+                    }
+                  };
+                  
+                  // Try sending data after window loads
+                  setTimeout(sendData, 1000);
+                  // Retry mechanism in case first attempt fails
+                  setTimeout(sendData, 2000);
+                }
+              }}
+              title={drones.length === 0 ? "Load drone data first" : "Open analytics dashboard with loaded data"}
+              disabled={drones.length === 0}
             >
               📈 Open Analytics Dashboard
+              {drones.length > 0 ? ` (${drones.length} drones)` : ''}
             </button>
             <p className="analytics-description">
-              View detailed charts and statistics of your drone data
+              {drones.length === 0 
+                ? "Load CSV drone data to enable analytics" 
+                : `View charts and statistics for ${drones.length} loaded drone${drones.length > 1 ? 's' : ''}`
+              }
             </p>
           </div>
         </div>

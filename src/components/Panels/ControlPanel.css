@@ -614,6 +614,20 @@
   transform: translateY(0);
 }
 
+.analytics-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.analytics-btn:disabled:hover {
+  background: #333;
+  transform: none;
+  box-shadow: none;
+}
+
 .analytics-description {
   color: #aaa;
   font-size: 11px;

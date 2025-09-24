@@ -225,6 +225,46 @@
             background: rgba(76, 175, 239, 0.1);
         }
 
+        .data-status {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #222;
+        }
+
+        .loading-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #333;
+            border-top: 3px solid #4cafef;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .data-loaded {
+            color: #4cafef;
+            font-weight: 600;
+        }
+
+        .data-loaded .checkmark {
+            color: #50ff50;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -253,25 +293,42 @@
             <!-- Sidebar Controls -->
             <aside class="sidebar">
                 <div class="control-group">
-                    <label>📁 Upload CSV Data</label>
-                    <div class="upload-area" id="uploadArea">
-                        <input type="file" id="csvInput" accept=".csv" multiple style="display: none;">
-                        <p>📎 Drop CSV files here or click to browse</p>
-                        <small>Supports multiple drone CSV files</small>
+                    <label>� Loaded Data</label>
+                    <div class="data-status" id="dataStatus">
+                        <div class="loading-indicator">
+                            <div class="spinner"></div>
+                            <p>Waiting for drone data from simulator...</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label>📈 Chart Type</label>
-                    <select id="chartType">
-                        <option value="position-x">X Position</option>
-                        <option value="position-y">Y Position</option>
-                        <option value="position-z">Z Position / Altitude</option>
-                        <option value="roll">Roll Angle</option>
-                        <option value="pitch">Pitch Angle</option>
-                        <option value="yaw">Yaw Angle</option>
-                        <option value="speed">Speed</option>
-                        <option value="distance">Distance Traveled</option>
+                    <label>� X-Axis Parameter</label>
+                    <select id="xAxisType">
+                        <option value="elapsed_time">⏰ Time</option>
+                        <option value="drone_x">📍 X Position</option>
+                        <option value="drone_y">📍 Y Position</option>
+                        <option value="drone_z">📍 Z Position / Altitude</option>
+                        <option value="drone_roll">🔄 Roll Angle</option>
+                        <option value="drone_pitch">🔄 Pitch Angle</option>
+                        <option value="drone_yaw">🔄 Yaw Angle</option>
+                        <option value="speed">⚡ Speed</option>
+                        <option value="distance">📏 Distance Traveled</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>📊 Y-Axis Parameter</label>
+                    <select id="yAxisType">
+                        <option value="drone_z">📍 Z Position / Altitude</option>
+                        <option value="drone_x">📍 X Position</option>
+                        <option value="drone_y">📍 Y Position</option>
+                        <option value="drone_roll">🔄 Roll Angle</option>
+                        <option value="drone_pitch">🔄 Pitch Angle</option>
+                        <option value="drone_yaw">🔄 Yaw Angle</option>
+                        <option value="speed">⚡ Speed</option>
+                        <option value="distance">📏 Distance Traveled</option>
+                        <option value="elapsed_time">⏰ Time</option>
                     </select>
                 </div>
 
@@ -329,108 +386,58 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            setupFileUpload();
             setupEventListeners();
+            setupMessageListener();
         });
 
-        function setupFileUpload() {
-            const uploadArea = document.getElementById('uploadArea');
-            const csvInput = document.getElementById('csvInput');
-
-            // Click to upload
-            uploadArea.addEventListener('click', () => csvInput.click());
-
-            // Drag and drop
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
-            });
-
-            // File input change
-            csvInput.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
-            });
-        }
-
         function setupEventListeners() {
-            document.getElementById('chartType').addEventListener('change', updateChart);
+            document.getElementById('xAxisType').addEventListener('change', updateChart);
+            document.getElementById('yAxisType').addEventListener('change', updateChart);
         }
 
-        function handleFiles(files) {
-            droneData = [];
-            const filePromises = [];
-
-            for (let file of files) {
-                if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-                    filePromises.push(parseCSV(file));
+        function setupMessageListener() {
+            // Listen for data from parent simulator window
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'LOAD_DRONE_DATA') {
+                    console.log('Received drone data:', event.data.data);
+                    loadDroneDataFromSimulator(event.data.data);
                 }
-            }
-
-            Promise.all(filePromises).then(() => {
-                updateDroneList();
-                updateChart();
-                showChartArea();
             });
+
+            // Show timeout message if no data received after 10 seconds
+            setTimeout(() => {
+                if (droneData.length === 0) {
+                    const dataStatus = document.getElementById('dataStatus');
+                    dataStatus.innerHTML = `
+                        <div class="loading-indicator">
+                            <p style="color: #ff6b6b;">⚠️ No data received from simulator</p>
+                            <small>Make sure to open this window from the simulator's Analytics button</small>
+                        </div>
+                    `;
+                }
+            }, 10000);
         }
 
-        function parseCSV(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const csv = e.target.result;
-                    const lines = csv.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-                    
-                    const data = {
-                        name: file.name.replace('.csv', ''),
-                        color: generateRandomColor(),
-                        frames: []
-                    };
+        function loadDroneDataFromSimulator(analyticsData) {
+            droneData = analyticsData.map(drone => ({
+                name: drone.name,
+                color: drone.color,
+                frames: drone.frames
+            }));
 
-                    for (let i = 1; i < lines.length; i++) {
-                        if (lines[i].trim()) {
-                            const values = lines[i].split(',');
-                            const frame = {};
-                            
-                            headers.forEach((header, index) => {
-                                const value = parseFloat(values[index]);
-                                if (!isNaN(value)) {
-                                    frame[header] = value;
-                                }
-                            });
-                            
-                            // Use elapsed_time if available, otherwise use index
-                            if (frame.elapsed_time !== undefined) {
-                                frame.time = frame.elapsed_time;
-                            } else {
-                                frame.time = i * 0.1; // Default time step
-                            }
-                            
-                            if (Object.keys(frame).length > 0) {
-                                data.frames.push(frame);
-                            }
-                        }
-                    }
+            // Update status display
+            const dataStatus = document.getElementById('dataStatus');
+            dataStatus.innerHTML = `
+                <div class="data-loaded">
+                    <div class="checkmark">✅</div>
+                    <p>Successfully loaded ${droneData.length} drone${droneData.length > 1 ? 's' : ''}</p>
+                    <small>${droneData.reduce((total, drone) => total + drone.frames.length, 0)} data points total</small>
+                </div>
+            `;
 
-                    if (data.frames.length > 0) {
-                        droneData.push(data);
-                        console.log(`Loaded ${data.name} with ${data.frames.length} frames`);
-                        console.log('Sample frame:', data.frames[0]); // Debug info
-                    }
-                    resolve();
-                };
-                reader.readAsText(file);
-            });
+            updateDroneList();
+            updateChart();
+            showChartArea();
         }
 
         function generateRandomColor() {
@@ -464,7 +471,8 @@
 
         function updateChart() {
             const selectedDrones = getSelectedDrones();
-            const chartType = document.getElementById('chartType').value;
+            const xAxisType = document.getElementById('xAxisType').value;
+            const yAxisType = document.getElementById('yAxisType').value;
 
             if (selectedDrones.length === 0) {
                 showNoDataMessage();
@@ -473,11 +481,15 @@
 
             const datasets = selectedDrones.map(drone => {
                 const data = drone.frames.map((frame) => {
-                    const yValue = getValueByType(frame, chartType);
-                    if (yValue === undefined || isNaN(yValue)) return null;
+                    const xValue = getValueByParameter(frame, xAxisType);
+                    const yValue = getValueByParameter(frame, yAxisType);
+                    
+                    if (xValue === undefined || isNaN(xValue) || yValue === undefined || isNaN(yValue)) {
+                        return null;
+                    }
                     
                     return {
-                        x: frame.time || frame.elapsed_time || 0,
+                        x: xValue,
                         y: yValue
                     };
                 }).filter(point => point !== null);
@@ -488,34 +500,30 @@
                     borderColor: drone.color,
                     backgroundColor: drone.color + '20',
                     fill: false,
-                    tension: 0.1
+                    tension: 0.1,
+                    pointRadius: 2
                 };
             });
 
-            renderChart(datasets, chartType);
-            updateStatistics(selectedDrones, chartType);
+            renderChart(datasets, xAxisType, yAxisType);
+            updateStatistics(selectedDrones, xAxisType, yAxisType);
         }
 
-        function getValueByType(frame, type) {
-            // Map chart types to your actual CSV column names
-            const mappings = {
-                'position-x': 'drone_x',
-                'position-y': 'drone_y', 
-                'position-z': 'drone_z',
-                'roll': 'drone_roll',
-                'pitch': 'drone_pitch',
-                'yaw': 'drone_yaw',
-                'speed': calculateSpeed(frame),
-                'distance': calculateDistance(frame)
-            };
-            
-            if (type === 'speed') {
-                return calculateSpeed(frame);
-            } else if (type === 'distance') {
-                return calculateDistance(frame);
+        function getValueByParameter(frame, parameter) {
+            // Handle direct parameter access
+            if (frame[parameter] !== undefined) {
+                return parseFloat(frame[parameter]);
             }
             
-            return frame[mappings[type]];
+            // Handle calculated parameters
+            switch (parameter) {
+                case 'speed':
+                    return calculateSpeed(frame);
+                case 'distance':
+                    return calculateDistance(frame);
+                default:
+                    return 0;
+            }
         }
 
         function calculateSpeed(frame) {
@@ -542,23 +550,27 @@
             return 0;
         }
 
-        function renderChart(datasets, chartType) {
+        function renderChart(datasets, xAxisType, yAxisType) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             
             if (chart) {
                 chart.destroy();
             }
 
-            const chartLabels = {
-                'position-x': 'X Position (m)',
-                'position-y': 'Y Position (m)',
-                'position-z': 'Z Position / Altitude (m)',
-                'roll': 'Roll Angle (degrees)',
-                'pitch': 'Pitch Angle (degrees)',
-                'yaw': 'Yaw Angle (degrees)',
+            const parameterLabels = {
+                'elapsed_time': 'Time (s)',
+                'drone_x': 'X Position (m)',
+                'drone_y': 'Y Position (m)',
+                'drone_z': 'Z Position / Altitude (m)',
+                'drone_roll': 'Roll Angle (rad)',
+                'drone_pitch': 'Pitch Angle (rad)',
+                'drone_yaw': 'Yaw Angle (rad)',
                 'speed': 'Speed (m/s)',
                 'distance': 'Distance (m)'
             };
+
+            const xLabel = parameterLabels[xAxisType] || xAxisType;
+            const yLabel = parameterLabels[yAxisType] || yAxisType;
 
             chart = new Chart(ctx, {
                 type: 'line',
@@ -569,7 +581,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: chartLabels[chartType] || 'Drone Data',
+                            text: `${yLabel} vs ${xLabel}`,
                             color: '#4cafef',
                             font: { size: 16, weight: 'bold' }
                         },
@@ -582,41 +594,57 @@
                             type: 'linear',
                             title: {
                                 display: true,
-                                text: 'Time (s)',
+                                text: xLabel,
                                 color: '#ffffff'
                             },
-                            ticks: { color: '#cccccc' },
-                            grid: { color: '#333333' }
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
                         },
                         y: {
                             title: {
                                 display: true,
-                                text: chartLabels[chartType] || 'Value',
+                                text: yLabel,
                                 color: '#ffffff'
                             },
-                            ticks: { color: '#cccccc' },
-                            grid: { color: '#333333' }
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
                         }
                     }
                 }
             });
         }
 
-        function updateStatistics(selectedDrones, chartType) {
+        function updateStatistics(selectedDrones, xAxisType, yAxisType) {
             if (!showStats) return;
+
+            // Update the stats panel header
+            const parameterLabels = {
+                'elapsed_time': 'Time',
+                'drone_x': 'X Position',
+                'drone_y': 'Y Position',
+                'drone_z': 'Z Position',
+                'drone_roll': 'Roll',
+                'drone_pitch': 'Pitch',
+                'drone_yaw': 'Yaw',
+                'speed': 'Speed',
+                'distance': 'Distance'
+            };
+            
+            const yLabel = parameterLabels[yAxisType] || yAxisType;
+            document.querySelector('#statsPanel h4').textContent = `📈 Statistics Summary - ${yLabel}`;
 
             const statsTableBody = document.querySelector('#statsTable tbody');
             statsTableBody.innerHTML = '';
 
             selectedDrones.forEach(drone => {
-                const values = drone.frames.map(frame => getValueByType(frame, chartType)).filter(v => v !== undefined);
+                const yValues = drone.frames.map(frame => getValueByParameter(frame, yAxisType)).filter(v => v !== undefined && !isNaN(v));
                 
-                if (values.length === 0) return;
+                if (yValues.length === 0) return;
 
-                const min = Math.min(...values);
-                const max = Math.max(...values);
-                const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
-                const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
+                const min = Math.min(...yValues);
+                const max = Math.max(...yValues);
+                const avg = yValues.reduce((sum, val) => sum + val, 0) / yValues.length;
+                const variance = yValues.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / yValues.length;
                 const std = Math.sqrt(variance);
 
                 const row = document.createElement('tr');
