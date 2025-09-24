@@ -28,6 +28,7 @@ function App() {
 
   const activeDrone = droneManager.getActiveDrone();
   const visibleDrones = droneManager.getVisibleDrones();
+  const timelineDrones = droneManager.drones.filter(d => d.inTimeline);
 
   // Timeline management
   const timeline = useTimeline({
@@ -103,24 +104,30 @@ function App() {
         {sceneConfig.showGrid && <Grid size={1000} divisions={50} />}
         {sceneConfig.showAxes && <Axes length={100} />}
         
-        {/* Flight paths for all visible drones */}
-        {sceneConfig.showFlightPaths && visibleDrones.map((drone) => (
+        {/* Flight paths for timeline drones */}
+        {sceneConfig.showFlightPaths && timelineDrones.map((drone) => (
           <FlightPath
             key={`path-${drone.id}`}
             frames={drone.frames}
             scaleFactor={sceneConfig.scaleFactor}
             color={drone.color}
-            opacity={drone.id === activeDrone?.id ? 1.0 : 0.4}
+            opacity={1.0}
           />
         ))}
         
-        {/* Active drone model */}
-        {currentFrame && (
-          <Drone 
-            frame={currentFrame} 
-            scaleFactor={sceneConfig.scaleFactor} 
-          />
-        )}
+        {/* Render all drones currently active on the timeline at their effective time */}
+        {timelineDrones.map(drone => {
+          const offset = timeline.timelineState.droneOffsets[drone.id] || 0;
+          const effectiveTime = timeline.timelineState.currentTime - offset;
+          if (effectiveTime < 0) return null;
+          const lastTime = drone.frames[drone.frames.length - 1]?.time ?? 0;
+          if (effectiveTime > lastTime) return null;
+          const frameIndex = findFrameIndexAtTime(drone.frames, effectiveTime);
+          const frame = drone.frames[frameIndex];
+          return (
+            <Drone key={`drone-${drone.id}`} frame={frame} scaleFactor={sceneConfig.scaleFactor} />
+          );
+        })}
         
         {/* Camera controls */}
         <OrbitControls
@@ -166,6 +173,9 @@ function App() {
       onToggleVisibility={droneManager.toggleDroneVisibility}
       onUpdateName={droneManager.updateDroneName}
       onClearError={droneManager.clearError}
+      onAddToTimeline={droneManager.addToTimeline}
+      onRemoveFromTimeline={droneManager.removeFromTimeline}
+      onToggleTimelineHidden={droneManager.toggleTimelineHidden}
       currentStats={currentStats}
       timelineState={timeline.timelineState}
       sceneConfig={sceneConfig}

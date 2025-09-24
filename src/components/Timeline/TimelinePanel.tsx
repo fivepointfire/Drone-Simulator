@@ -327,7 +327,9 @@ export function TimelinePanel({
   };
 
   const renderDroneTracks = () => {
-    return drones.map((drone, index) => {
+    // Only render tracks for drones marked inTimeline and not timelineHidden
+    const tracks = drones.filter(d => d.inTimeline && !d.timelineHidden);
+    return tracks.map((drone, index) => {
       const isSelected = timelineState.selectedDrones.includes(drone.id);
       const trackHeight = 40;
       const y = index * (trackHeight + 2);

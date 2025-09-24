@@ -34,6 +34,9 @@ export interface DroneInstance {
   frames: DroneFrame[];
   color: string;
   visible: boolean;
+  // Timeline lifecycle flags
+  inTimeline: boolean;       // whether this drone appears in the timeline/playback
+  timelineHidden?: boolean;  // hide track rendering in the timeline UI
 }
 
 export interface DroneManagerState {

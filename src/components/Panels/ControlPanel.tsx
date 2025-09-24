@@ -17,6 +17,10 @@ interface ControlPanelProps {
   onToggleVisibility: (droneId: string) => void;
   onUpdateName: (droneId: string, newName: string) => void;
   onClearError: () => void;
+  // Timeline lifecycle actions
+  onAddToTimeline: (droneId: string) => void;
+  onRemoveFromTimeline: (droneId: string) => void;
+  onToggleTimelineHidden: (droneId: string) => void;
   
   // Stats and Timeline
   currentStats: any;
@@ -27,7 +31,7 @@ interface ControlPanelProps {
     showGrid: boolean;
     showAxes: boolean;
     showFlightPaths: boolean;
-    cameraMode: 'free' | 'follow' | 'orbit';
+    cameraMode: 'free' | 'follow';
     scaleFactor: number;
   };
   onSceneConfigChange: (config: any) => void;
@@ -46,6 +50,9 @@ export function ControlPanel({
   onToggleVisibility,
   onUpdateName: _onUpdateName,
   onClearError,
+  onAddToTimeline,
+  onRemoveFromTimeline,
+  onToggleTimelineHidden,
   currentStats,
   timelineState,
   sceneConfig,
@@ -166,6 +173,34 @@ export function ControlPanel({
                                 >
                                   {drone.visible ? '●' : '○'}
                           </button>
+
+                      {/* Timeline lifecycle */}
+                      {!drone.inTimeline ? (
+                        <button
+                          className="select-btn"
+                          onClick={() => onAddToTimeline(drone.id)}
+                          title="Add to timeline"
+                        >
+                          ➕
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            className={`select-btn ${drone.timelineHidden ? '' : 'selected'}`}
+                            onClick={() => onToggleTimelineHidden(drone.id)}
+                            title={drone.timelineHidden ? 'Show track' : 'Hide track'}
+                          >
+                            {drone.timelineHidden ? '🙈' : '👁️'}
+                          </button>
+                          <button
+                            className="remove-btn"
+                            onClick={() => onRemoveFromTimeline(drone.id)}
+                            title="Remove from timeline"
+                          >
+                            −
+                          </button>
+                        </>
+                      )}
 
                           <button
                             className={`select-btn ${activeDroneId === drone.id ? 'selected' : ''}`}

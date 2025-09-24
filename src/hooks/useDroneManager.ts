@@ -40,6 +40,8 @@ export function useDroneManager() {
         frames,
         color: droneColor,
         visible: true,
+        inTimeline: false,
+        timelineHidden: false,
       };
 
       setState(prev => ({
@@ -93,6 +95,28 @@ export function useDroneManager() {
     }));
   }, []);
 
+  // Timeline lifecycle management
+  const addToTimeline = useCallback((droneId: string) => {
+    setState(prev => ({
+      ...prev,
+      drones: prev.drones.map(d => d.id === droneId ? { ...d, inTimeline: true } : d),
+    }));
+  }, []);
+
+  const removeFromTimeline = useCallback((droneId: string) => {
+    setState(prev => ({
+      ...prev,
+      drones: prev.drones.map(d => d.id === droneId ? { ...d, inTimeline: false } : d),
+    }));
+  }, []);
+
+  const toggleTimelineHidden = useCallback((droneId: string) => {
+    setState(prev => ({
+      ...prev,
+      drones: prev.drones.map(d => d.id === droneId ? { ...d, timelineHidden: !d.timelineHidden } : d),
+    }));
+  }, []);
+
   const updateDroneName = useCallback((droneId: string, newName: string) => {
     setState(prev => ({
       ...prev,
@@ -122,6 +146,9 @@ export function useDroneManager() {
     removeDrone,
     setActiveDrone,
     toggleDroneVisibility,
+    addToTimeline,
+    removeFromTimeline,
+    toggleTimelineHidden,
     updateDroneName,
     clearError,
     getActiveDrone,
