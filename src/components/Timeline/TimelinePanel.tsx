@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, useState } from 'react';
+import React, { useRef, useCallback, useEffect, useState, ReactElement } from 'react';
 import { DroneInstance } from '../../types/DroneTypes';
 import { TimelineState, TimelineMarker, PlaybackRange } from '../../types/TimelineTypes';
 import { formatTime } from '../../utils/csvLoader';
@@ -249,8 +249,8 @@ export function TimelinePanel({
     const totalPixelWidth = effectiveWidth * timelineState.zoomLevel;
     const pixelsPerSecond = totalPixelWidth / baseTimeRange;
 
-    const majorTicks: JSX.Element[] = [];
-    const minorTicks: JSX.Element[] = [];
+    const majorTicks: ReactElement[] = [];
+    const minorTicks: ReactElement[] = [];
 
     const startTick = Math.floor(startTime / timeStep) * timeStep;
     const endTick = Math.ceil(endTime / timeStep) * timeStep;
@@ -289,7 +289,7 @@ export function TimelinePanel({
 
   const renderGridLines = () => {
     const { timeStep, minorStep, startTime, endTime } = getTickIntervals();
-    const lines: JSX.Element[] = [];
+    const lines: ReactElement[] = [];
 
     const startMinorTick = Math.floor(startTime / minorStep) * minorStep;
     const endMinorTick = Math.ceil(endTime / minorStep) * minorStep;
