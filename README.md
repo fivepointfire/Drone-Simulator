@@ -1,4 +1,4 @@
-# Telemetry Drone Simulator
+# Telemtry Drone Simulator 
 
 A modern, production-ready drone flight simulator built with React Three Fiber, TypeScript, and Vite. This simulator provides comprehensive 3D visualization and analysis tools for drone telemetry data with an intuitive timeline-based interface.
 
@@ -138,16 +138,6 @@ src/
 ├── App.css                         # Application styles
 └── main.tsx                        # Application entry point
 ```
-
-## 🔧 Recent Updates
-
-### Version 2.1.0 (Latest)
-- ✅ **Fixed TypeScript compilation errors**: Resolved all TS issues for clean builds
-- ✅ **Dependency updates**: Added missing `terser` for production builds
-- ✅ **Code optimization**: Removed unused imports and variables
-- ✅ **Type safety improvements**: Enhanced type definitions and error handling
-- ✅ **Build system**: Optimized Vite configuration for better performance
-
 ## ⚡ Performance Features
 
 - **Efficient Data Structures**: Binary search for frame lookup (O(log n))
