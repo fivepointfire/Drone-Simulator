@@ -1,4 +1,4 @@
-# Drone Simulator v2
+# Telemtry Drone Simulator 
 
 A modern, production-ready drone flight simulator built with React Three Fiber, TypeScript, and Vite. This simulator provides comprehensive 3D visualization and analysis tools for drone telemetry data with an intuitive timeline-based interface.
 
