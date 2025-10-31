@@ -27,7 +27,6 @@ function App() {
   });
 
   const activeDrone = droneManager.getActiveDrone();
-  const visibleDrones = droneManager.getVisibleDrones();
   const timelineDrones = droneManager.drones.filter(d => d.inTimeline);
 
   // Timeline management
@@ -69,9 +68,8 @@ function App() {
   // Camera controller to implement camera modes
   function CameraController() {
     const { camera } = useThree();
-    const [theta, setTheta] = useState(0);
 
-    useFrame((_state, delta) => {
+    useFrame(() => {
       if (!activeDrone || !currentFrame) return;
       if (sceneConfig.cameraMode === 'follow') {
         // Simple follow: place camera behind and above the drone

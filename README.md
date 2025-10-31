@@ -2,6 +2,8 @@
 
 A modern, production-ready drone flight simulator built with React Three Fiber, TypeScript, and Vite. This simulator provides comprehensive 3D visualization and analysis tools for drone telemetry data with an intuitive timeline-based interface.
 
+![header](./assets/base-header.png)
+
 ## 🚁 Features
 
 - **3D Drone Visualization**: Realistic drone model with animated rotors and physics-based movement
@@ -14,6 +16,8 @@ A modern, production-ready drone flight simulator built with React Three Fiber, 
 - **Responsive UI**: Modern, clean interface that adapts to different screen sizes
 - **Performance Optimized**: Efficient rendering and data handling for large datasets
 
+![timeline](./assets/timeline.png)
+![analytics](./assets/analytics.png)
 ## 🛠 Technology Stack
 
 - **Frontend Framework**: React 18 + TypeScript
@@ -82,6 +86,7 @@ The simulator expects CSV files with the following columns:
 
 ### File Management
 - **Upload CSV**: Use the "Choose CSV File" button to load drone telemetry
+- **Test Files**: Use any CSV file from the `public` folder for testing (e.g., `dat.csv`, `da2.csv`)
 - **Multiple Drones**: Load multiple CSV files to compare flight paths
 - **Drone Selection**: Click on drone entries to set as active or toggle visibility
 
